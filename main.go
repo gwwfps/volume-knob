@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -19,17 +17,18 @@ var latestVolume int
 func setVolume(v int) {
 	mutex.Lock()
 	if v == latestVolume {
-		cmd := exec.Command("/usr/bin/osascript", "-e", fmt.Sprintf("set volume output volume %d", v))
-		_, err := cmd.Output()
+		cmd := volumeCommand(v)
+		output, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Print("[error] setting volume: ", err)
+			log.Println(string(output))
 		}
 	}
 	mutex.Unlock()
 }
 
 func main() {
-	ttys, _ := filepath.Glob("/dev/tty.usbmodem*")
+	ttys, _ := filepath.Glob(ttyGlob())
 	c := &serial.Config{Name: ttys[0], Baud: 115200}
 	s, err := serial.OpenPort(c)
 	if err != nil {
